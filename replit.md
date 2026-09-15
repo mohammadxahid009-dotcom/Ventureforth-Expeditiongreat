@@ -1,10 +1,13 @@
-# [Project name]
+# Ventureforth Expedition
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A real-world exploration game that turns a player’s surroundings into a coordinate-grid adventure with GPS discovery, photo memories, progress tracking, and multiplayer hunts.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/ventureforth-expedition run dev` — run the expedition web app
+- `pnpm --filter @workspace/ventureforth-expedition run typecheck` — typecheck the web app
+- `PORT=20357 BASE_PATH=/ pnpm --filter @workspace/ventureforth-expedition run build` — create the production web build
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -19,22 +22,32 @@ _Replace the heading above with the project's name, and this line with one sente
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- Web app: React + Vite + TanStack Router + Leaflet
+- External services: Supabase Auth, Postgres tables, Storage, and Realtime
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/ventureforth-expedition/src/routes/index.tsx` — main expedition game flow
+- `artifacts/ventureforth-expedition/src/components/` — map, direction tool, photo memories, multiplayer lobby, and UI primitives
+- `artifacts/ventureforth-expedition/src/lib/` — expedition calculations, progress, photos, multiplayer, and session helpers
+- `artifacts/ventureforth-expedition/src/integrations/supabase/` — Supabase client and auth integration
+- `artifacts/ventureforth-expedition/src/index.css` — analog field-instrument theme
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The expedition frontend keeps the uploaded Supabase-backed behavior rather than duplicating its data model in the workspace API.
+- The app runs as a client-side Vite artifact; document-level metadata lives in `index.html`, while TanStack Router owns in-app routes.
+- GPS, map, photo storage, and multiplayer features remain real integrations; safe initial loading states handle missing browser permissions or configuration.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Sign in or create an account before starting an expedition.
+- Use location and heading data to choose a direction and discover mystery destinations.
+- Reveal the map through walking, preserve progress, save photo memories, and join timed multiplayer hunts.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Preserve the uploaded app’s visuals and behavior instead of replacing it with a new design.
 
 ## Gotchas
 

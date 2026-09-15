@@ -1,0 +1,1 @@
+- [TanStack Start client port](tanstack-start-client-port.md) — client-only Vite artifacts must keep the document shell in index.html, not render html/body from the root route.

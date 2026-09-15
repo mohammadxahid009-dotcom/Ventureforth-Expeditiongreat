@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Ventureforth Expedition"
+description = "A real-world exploration game that turns your surroundings into a coordinate-grid adventure with GPS discovery, photo memories, progress tracking, and multiplayer hunts."
+version = "1.0.0"
+id = "artifacts/ventureforth-expedition"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20357
+
+[services.development]
+run = "pnpm --filter @workspace/ventureforth-expedition run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ventureforth-expedition", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ventureforth-expedition/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20357"
+BASE_PATH = "/"
