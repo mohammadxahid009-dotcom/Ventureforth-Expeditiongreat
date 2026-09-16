@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: friends
+    description: Persistent friend profiles and requests
 paths:
   /healthz:
     get:
@@ -24,7 +26,182 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /friends:
+    get:
+      operationId: getFriendsOverview
+      tags: [friends]
+      security:
+        - supabaseBearer: []
+      summary: Get the current user's friends and requests
+      responses:
+        "200":
+          description: Friends overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendsOverview"
+        "401":
+          description: Authentication required
+    delete:
+      operationId: removeFriend
+      tags: [friends]
+      security:
+        - supabaseBearer: []
+      summary: Remove a friend
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "204":
+          description: Friend removed
+        "400":
+          description: Invalid user ID
+        "401":
+          description: Authentication required
+        "404":
+          description: Friend not found
+  /friends/profile:
+    put:
+      operationId: upsertFriendProfile
+      tags: [friends]
+      security:
+        - supabaseBearer: []
+      summary: Create or update the current user's friend profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FriendProfileInput"
+      responses:
+        "200":
+          description: Updated friend profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendProfile"
+        "400":
+          description: Invalid display name
+        "401":
+          description: Authentication required
+  /friends/search:
+    get:
+      operationId: searchFriendProfiles
+      tags: [friends]
+      security:
+        - supabaseBearer: []
+      summary: Search discoverable friend profiles
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 40
+      responses:
+        "200":
+          description: Matching friend profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FriendSearchResult"
+        "400":
+          description: Invalid search query
+        "401":
+          description: Authentication required
+  /friends/requests:
+    post:
+      operationId: createFriendRequest
+      tags: [friends]
+      security:
+        - supabaseBearer: []
+      summary: Send a friend request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FriendRequestInput"
+      responses:
+        "201":
+          description: Created friend request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendRequest"
+        "400":
+          description: Invalid or duplicate request
+        "401":
+          description: Authentication required
+        "404":
+          description: Recipient profile not found
+  /friends/requests/{requestId}/accept:
+    post:
+      operationId: acceptFriendRequest
+      tags: [friends]
+      security:
+        - supabaseBearer: []
+      summary: Accept an incoming friend request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Accepted friendship
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friend"
+        "400":
+          description: Invalid request state
+        "401":
+          description: Authentication required
+        "404":
+          description: Request not found
+  /friends/requests/{requestId}/decline:
+    post:
+      operationId: declineFriendRequest
+      tags: [friends]
+      security:
+        - supabaseBearer: []
+      summary: Decline an incoming friend request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Declined friend request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendRequest"
+        "400":
+          description: Invalid request state
+        "401":
+          description: Authentication required
+        "404":
+          description: Request not found
 components:
+  securitySchemes:
+    supabaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +210,94 @@ components:
           type: string
       required:
         - status
+    FriendProfile:
+      type: object
+      required: [userId, displayName, createdAt, updatedAt]
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    FriendProfileInput:
+      type: object
+      required: [displayName]
+      properties:
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 32
+    FriendSearchResult:
+      type: object
+      required: [userId, displayName]
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+    Friend:
+      type: object
+      required: [userId, displayName, connectedAt]
+      properties:
+        userId:
+          type: string
+        displayName:
+          type: string
+        connectedAt:
+          type: string
+          format: date-time
+    FriendRequest:
+      type: object
+      required:
+        [id, senderUserId, senderDisplayName, receiverUserId, receiverDisplayName, status, createdAt]
+      properties:
+        id:
+          type: string
+        senderUserId:
+          type: string
+        senderDisplayName:
+          type: string
+        receiverUserId:
+          type: string
+        receiverDisplayName:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, declined]
+        createdAt:
+          type: string
+          format: date-time
+        respondedAt:
+          type: ["string", "null"]
+          format: date-time
+    FriendRequestInput:
+      type: object
+      required: [receiverUserId]
+      properties:
+        receiverUserId:
+          type: string
+          minLength: 1
+    FriendsOverview:
+      type: object
+      required: [profile, friends, incoming, outgoing]
+      properties:
+        profile:
+          $ref: "#/components/schemas/FriendProfile"
+        friends:
+          type: array
+          items:
+            $ref: "#/components/schemas/Friend"
+        incoming:
+          type: array
+          items:
+            $ref: "#/components/schemas/FriendRequest"
+        outgoing:
+          type: array
+          items:
+            $ref: "#/components/schemas/FriendRequest"
 

@@ -16,6 +16,7 @@ import {
   Camera,
   Timer,
   Users,
+  UserPlus,
 } from "lucide-react";
 import {
   ARRIVAL_RADIUS,
@@ -39,6 +40,7 @@ import { addPhoto, deletePhoto, listPhotos, updatePhoto, type PhotoMemory } from
 import { supabase } from "@/integrations/supabase/client";
 import MultiplayerLobby from "@/components/MultiplayerLobby";
 import { useHuntRealtime } from "@/hooks/use-hunt-realtime";
+import FriendsPanel from "@/components/FriendsPanel";
 import {
   assignHuntTarget,
   completeHuntTarget,
@@ -174,6 +176,7 @@ function Index() {
   const { user, loading: authLoading } = useSession();
   const [phase, setPhase] = useState<Phase>("start");
   const [multiplayerOpen, setMultiplayerOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
   const [multiplayerRoom, setMultiplayerRoom] = useState<HuntRoom | null>(null);
   const [player, setPlayer] = useState<LatLng | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
@@ -542,11 +545,16 @@ function Index() {
     );
   }
 
+  if (friendsOpen && user) {
+    return <FriendsPanel userId={user.id} onClose={() => setFriendsOpen(false)} />;
+  }
+
   if (phase !== "active" || !player || !destination) {
     return (
       <StartScreen
         onBegin={begin}
         onMultiplayer={() => setMultiplayerOpen(true)}
+        onFriends={() => setFriendsOpen(true)}
         loading={phase === "locating"}
         error={error}
         level={level}
@@ -884,12 +892,14 @@ function Coord({ axis, value }: { axis: string; value: number }) {
 function StartScreen({
   onBegin,
   onMultiplayer,
+  onFriends,
   loading,
   error,
   level,
 }: {
   onBegin: () => void;
   onMultiplayer: () => void;
+  onFriends: () => void;
   loading: boolean;
   error: string | null;
   level: number;
@@ -952,6 +962,13 @@ function StartScreen({
             className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-accent/35 px-4 py-3 text-[10px] font-bold tracking-[0.22em] text-accent transition-colors hover:bg-accent/10 disabled:opacity-60"
           >
             <Users className="h-4 w-4" /> MULTIPLAYER HUNT
+          </button>
+          <button
+            onClick={onFriends}
+            disabled={loading}
+            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-[10px] font-bold tracking-[0.22em] text-muted-foreground transition-colors hover:border-accent/45 hover:text-accent disabled:opacity-60"
+          >
+            <UserPlus className="h-4 w-4" /> ADD FRIENDS
           </button>
         </div>
 
