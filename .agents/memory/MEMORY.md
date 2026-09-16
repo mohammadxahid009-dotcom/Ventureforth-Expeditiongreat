@@ -1,1 +1,2 @@
 - [TanStack Start client port](tanstack-start-client-port.md) — client-only Vite artifacts must keep the document shell in index.html, not render html/body from the root route.
+- [Multiplayer hazard performance](multiplayer-hazard-performance.md) — keep short-lived map hazards local, ref-driven, and limited to one overlay plus one timer per active player.

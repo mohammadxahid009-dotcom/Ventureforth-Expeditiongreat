@@ -255,3 +255,40 @@ body {
     radial-gradient(circle at 50% 46%, transparent 30%, oklch(0.12 0.02 250 / 0.72) 100%),
     linear-gradient(oklch(0.35 0.06 70 / 0.12), oklch(0.2 0.03 250 / 0.2));
 }
+
+@keyframes redzone-clock-tick {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.redzone-clock {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  opacity: 0.78;
+  filter: drop-shadow(0 0 5px rgba(255, 67, 61, 0.32));
+}
+
+.redzone-clock-danger {
+  opacity: 0.92;
+  filter: drop-shadow(0 0 8px rgba(255, 67, 61, 0.58));
+}
+
+.redzone-clock-hand {
+  transform-origin: 24px 24px;
+  animation: redzone-clock-tick 1.15s steps(12, end) infinite;
+}
+
+.redzone-pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: redzone-clock-tick 1.15s steps(2, end) infinite;
+}

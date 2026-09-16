@@ -237,6 +237,10 @@ export default function MultiplayerLobby({ user, onClose, onHuntStarted }: Props
                   <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
                     Reach your destination before the clock hits zero, or the hunt is lost.
                   </p>
+                   <p className="mt-3 border-l border-destructive/45 pl-3 text-[10px] leading-relaxed text-destructive/80">
+                     REDZONE HAZARDS appear quietly along each explorer&apos;s route. The ticking
+                     circle lasts one minute — step around it or lose time faster.
+                   </p>
                 </>
               ) : (
                 <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">

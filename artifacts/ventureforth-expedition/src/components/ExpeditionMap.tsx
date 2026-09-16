@@ -17,6 +17,13 @@ type Props = {
   onMapReady: (map: L.Map) => void;
   /** Other room members, carried by Realtime rather than the fog/trail system. */
   otherPlayers?: Array<{ id: string; name: string; location: LatLng | null; connected: boolean }>;
+  /** The local player's short-lived multiplayer hazard, kept below the fog. */
+  redzone?: {
+    center: LatLng;
+    radius: number;
+    expiresAt: number;
+    inside: boolean;
+  } | null;
   /** two-finger twist angle in degrees, reported back so overlays can match */
   onRotate?: (deg: number) => void;
 };
@@ -69,6 +76,25 @@ function remotePlayerIcon(name: string) {
   });
 }
 
+function redzoneIcon(inside: boolean) {
+  return L.divIcon({
+    className: "",
+    iconSize: [52, 52],
+    iconAnchor: [26, 26],
+    html: `<div class="redzone-clock${inside ? " redzone-clock-danger" : ""}" aria-hidden="true">
+      <svg width="48" height="48" viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="17" fill="rgba(198,45,42,.16)" stroke="rgba(255,94,86,.78)" stroke-width="1.5"/>
+        <path d="M24 11v4M24 33v4M11 24h4M33 24h4" stroke="rgba(255,153,140,.85)" stroke-width="1.5" stroke-linecap="round"/>
+        <g class="redzone-clock-hand">
+          <path d="M24 24V14" stroke="rgba(255,226,210,.96)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M24 24l8 5" stroke="rgba(255,226,210,.96)" stroke-width="2" stroke-linecap="round"/>
+        </g>
+        <circle cx="24" cy="24" r="2.2" fill="rgba(255,226,210,.96)"/>
+      </svg>
+    </div>`,
+  });
+}
+
 const destIcon = L.divIcon({
   className: "",
   iconSize: [64, 64],
@@ -105,6 +131,7 @@ export default function ExpeditionMap({
   onUserPan,
   onMapReady,
   otherPlayers = [],
+  redzone = null,
   onRotate,
 }: Props) {
   const shellRef = useRef<HTMLDivElement>(null);
@@ -118,6 +145,8 @@ export default function ExpeditionMap({
   const ringRef = useRef<L.Circle | null>(null);
   const lineRef = useRef<L.Polyline | null>(null);
   const remoteRefs = useRef(new Map<string, L.Marker>());
+  const redzoneRef = useRef<L.Circle | null>(null);
+  const redzoneClockRef = useRef<L.Marker | null>(null);
 
   const programmatic = useRef(false);
   const drawn = useRef<{ tl: L.LatLng; zoom: number } | null>(null);
@@ -238,6 +267,49 @@ export default function ExpeditionMap({
       remoteRefs.current.delete(id);
     });
   }, [otherPlayers, ready]);
+
+  // One lightweight hazard overlay. It stays beneath the fog canvas, so the
+  // player must uncover the area before the clock becomes readable.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (!redzone) {
+      redzoneRef.current?.remove();
+      redzoneClockRef.current?.remove();
+      redzoneRef.current = null;
+      redzoneClockRef.current = null;
+      return;
+    }
+
+    const point = L.latLng(redzone.center.lat, redzone.center.lng);
+    if (!redzoneRef.current) {
+      redzoneRef.current = L.circle(point, {
+        radius: redzone.radius,
+        color: "rgba(255, 82, 74, .78)",
+        weight: 1.5,
+        fillColor: "rgba(180, 35, 35, .55)",
+        fillOpacity: 0.1,
+        interactive: false,
+      }).addTo(map);
+      redzoneClockRef.current = L.marker(point, {
+        icon: redzoneIcon(redzone.inside),
+        interactive: false,
+        zIndexOffset: 700,
+      }).addTo(map);
+    } else {
+      redzoneRef.current.setLatLng(point);
+      redzoneRef.current.setRadius(redzone.radius);
+      redzoneClockRef.current?.setLatLng(point);
+      redzoneClockRef.current?.setIcon(redzoneIcon(redzone.inside));
+    }
+  }, [
+    redzone?.center.lat,
+    redzone?.center.lng,
+    redzone?.radius,
+    redzone?.expiresAt,
+    redzone?.inside,
+    ready,
+  ]);
 
   // heading arrow + arrival aura
   useEffect(() => {

@@ -50,9 +50,13 @@ import {
   loadMyHuntTarget,
   type HuntRoom,
 } from "@/lib/multiplayer";
+import { useRedzone } from "@/lib/redzone";
 
 /** Milliseconds left on a hunt deadline, ticking once a second. */
-function useHuntCountdown(expiresAt: string | null | undefined) {
+function useHuntCountdown(
+  expiresAt: string | null | undefined,
+  extraElapsedMs = 0,
+) {
   const [left, setLeft] = useState<number | null>(null);
   useEffect(() => {
     if (!expiresAt) {
@@ -64,11 +68,11 @@ function useHuntCountdown(expiresAt: string | null | undefined) {
       setLeft(null);
       return;
     }
-    const tick = () => setLeft(deadline - Date.now());
+    const tick = () => setLeft(deadline - Date.now() - extraElapsedMs);
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [expiresAt]);
+  }, [expiresAt, extraElapsedMs]);
   return left;
 }
 
@@ -221,9 +225,26 @@ function Index() {
   } = useHuntRealtime(multiplayerRoom, user?.id, player);
   const huntRoom = liveHuntRoom ?? multiplayerRoom;
   const inMultiplayer = huntRoom !== null;
+  const redzoneActive = Boolean(huntRoom?.state === "active" && huntRoom.expires_at);
+  const {
+    zone: redzone,
+    discovered: redzoneDiscovered,
+    inside: insideRedzone,
+    penaltyMs: redzonePenaltyMs,
+  } = useRedzone({
+    active: redzoneActive,
+    roomId: huntRoom?.id ?? null,
+    userId: user?.id,
+    player,
+    destination,
+    heading,
+  });
   const huntWinner =
     huntPlayers.find((candidate) => candidate.user_id === huntRoom?.winner_user_id) ?? null;
-  const huntTimeLeft = useHuntCountdown(huntRoom?.state === "active" ? huntRoom.expires_at : null);
+  const huntTimeLeft = useHuntCountdown(
+    huntRoom?.state === "active" ? huntRoom.expires_at : null,
+    redzonePenaltyMs,
+  );
   const huntTimeUp = huntTimeLeft !== null && huntTimeLeft <= 0;
   const expiredRef = useRef<string | null>(null);
 
@@ -591,8 +612,31 @@ function Index() {
             mapRef.current = m;
             setMapObj(m);
           }}
+            redzone={
+              redzone && redzoneDiscovered
+                ? {
+                    center: redzone.center,
+                    radius: redzone.radius,
+                    expiresAt: redzone.expiresAt,
+                    inside: insideRedzone,
+                  }
+                : null
+            }
         />
       </Suspense>
+
+      {redzoneDiscovered && redzone && (
+        <div
+          className={`absolute right-3 top-[4.6rem] z-[500] flex items-center gap-2 rounded-xl border px-3 py-2 text-[9px] font-bold tracking-[0.18em] ${
+            insideRedzone
+              ? "border-destructive/55 bg-destructive/15 text-destructive"
+              : "border-destructive/30 bg-background/75 text-destructive/80"
+          }`}
+        >
+          <span className="redzone-pip" />
+          {insideRedzone ? "REDZONE · TIME DRAINING" : "REDZONE · AVOID"}
+        </div>
+      )}
 
       {/* top strip */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] p-3">
