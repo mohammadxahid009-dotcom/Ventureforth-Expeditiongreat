@@ -4,6 +4,9 @@
   "files": [],
   "references": [
     {
+      "path": "./artifacts/api-server"
+    },
+    {
       "path": "./lib/db"
     },
     {
