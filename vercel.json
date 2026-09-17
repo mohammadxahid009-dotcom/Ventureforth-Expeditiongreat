@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm --filter @workspace/ventureforth-expedition build",
-  "outputDirectory": "artifacts/ventureforth-expedition/dist/public",
+  "buildCommand": "pnpm --filter @workspace/ventureforth-expedition build:vercel",
+  "outputDirectory": "artifacts/ventureforth-expedition/public",
   "rewrites": [
     {
       "source": "/(.*)",
