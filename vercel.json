@@ -1,4 +1,5 @@
 {
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/ventureforth-expedition build:vercel",
   "outputDirectory": "artifacts/ventureforth-expedition/public",
   "rewrites": [
