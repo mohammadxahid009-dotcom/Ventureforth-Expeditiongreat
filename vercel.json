@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm --filter @workspace/ventureforth-expedition build",
+  "outputDirectory": "artifacts/ventureforth-expedition/dist/public",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
