@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm build",
-  "outputDirectory": "dist/public",
+  "buildCommand": "pnpm build:vercel",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/(.*)",
